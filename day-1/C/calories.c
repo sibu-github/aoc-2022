@@ -12,8 +12,6 @@ int main(void){
   int highest_1 = 0;
   int highest_2 = 0;
   int highest_3 = 0;
-  int prev_high_2 = 0;
-  int prev_high_3 = 0;
   int sum = 0;
   // line size of 50 is more than enough in our case,
   // not handling the edge case where line size might be greater than the declared array size
