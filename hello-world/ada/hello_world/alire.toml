@@ -1,0 +1,9 @@
+name = "hello_world"
+description = "Shiny new project"
+version = "0.1.0-dev"
+
+authors = ["Sibaprasad Maiti"]
+maintainers = ["Sibaprasad Maiti <sibu.it13@gmail.com>"]
+maintainers-logins = ["sibu-github"]
+
+executables = ["hello_world"]
