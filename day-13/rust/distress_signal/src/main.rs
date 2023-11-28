@@ -1,3 +1,8 @@
+use std::{
+    cmp::Ordering,
+    fmt::{Display, Formatter},
+};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -7,6 +12,41 @@ enum PacketData {
     Integer(u32),
 }
 
+impl Display for PacketData {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let s = serde_json::to_string(self).unwrap();
+        write!(f, "{}", s)
+    }
+}
+
+impl PartialEq for PacketData {
+    fn eq(&self, other: &Self) -> bool {
+        match get_data_order(self, other) {
+            DataOrder::Equal => true,
+            _ => false,
+        }
+    }
+}
+
+impl Eq for PacketData {}
+
+impl PartialOrd for PacketData {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for PacketData {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match get_data_order(self, other) {
+            DataOrder::Equal => Ordering::Equal,
+            DataOrder::RightOrder => Ordering::Less,
+            DataOrder::OutOfOrder => Ordering::Greater,
+        }
+    }
+}
+
+#[derive(Debug)]
 enum DataOrder {
     RightOrder,
     OutOfOrder,
@@ -95,21 +135,29 @@ fn get_data_order(first: &PacketData, second: &PacketData) -> DataOrder {
 fn main() {
     let file_name = "input.txt";
     let content = std::fs::read_to_string(file_name).unwrap();
-    let data = content
+    let mut data = content
         .lines()
         .filter(|s| !s.is_empty())
         .map(|s| serde_json::from_str::<PacketData>(s).unwrap())
         .collect::<Vec<_>>();
 
     let sum = data
+        .clone()
         .chunks(2)
         .enumerate()
-        .map(|(i, chunk)| match get_data_order(&chunk[0], &chunk[1]) {
-            DataOrder::RightOrder => i + 1,
-            _ => 0,
-        })
+        .map(|(i, chunk)| if chunk[0] < chunk[1] { i + 1 } else { 0 })
         .sum::<usize>();
     println!("{sum}");
+    let dp1 = "[[2]]";
+    let dp2 = "[[6]]";
+    let divider_packet_1 = serde_json::from_str(dp1).unwrap();
+    let divider_packet_2 = serde_json::from_str(dp2).unwrap();
+    data.push(divider_packet_1);
+    data.push(divider_packet_2);
+    data.sort();
+    let dp1_idx = data.iter().position(|d| d.to_string().eq(dp1)).unwrap();
+    let dp2_idx = data.iter().position(|d| d.to_string().eq(dp2)).unwrap();
+    println!("{}", (dp1_idx + 1) * (dp2_idx + 1));
 }
 
 #[cfg(test)]
@@ -118,9 +166,11 @@ mod tests {
 
     #[test]
     fn test_packet_data() {
-        let s = "[[6,9,1,3,[[2,9],4,8,[9,2,1]]],[],[[3],3]]";
-        let data = serde_json::from_str::<PacketData>(s).unwrap();
-        println!("{:?}", data);
+        let s = "[[1],[2,3,4]]";
+        let data1 = serde_json::from_str::<PacketData>(s).unwrap();
+        let s = "[1,[2,[3,[4,[5,6,0]]]],8,9]";
+        let data2 = serde_json::from_str::<PacketData>(s).unwrap();
+        println!("{:?}", get_data_order(&data1, &data2));
         assert_eq!(1, 0);
     }
 }
